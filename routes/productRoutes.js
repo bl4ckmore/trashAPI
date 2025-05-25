@@ -4,7 +4,7 @@ const pool = require("../db");
 const multer = require("multer");
 const path = require("path");
 
-// ✅ Multer storage config (move to top-level)
+// ✅ Multer storage config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
   filename: (req, file, cb) =>
@@ -12,7 +12,6 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-
 
 // ✅ GET all products
 router.get("/", async (req, res) => {
@@ -35,15 +34,15 @@ router.get("/:id", async (req, res) => {
     }
     res.json(result.rows[0]);
   } catch (err) {
-    console.error("Fetch single product error:", err);
+    console.error("Fetch product by ID error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
 
-// ✅ CREATE new product (with image upload)
-router.post("/", upload.single('image'), async (req, res) => {
+// ✅ CREATE product (with image upload)
+router.post("/", upload.single("image"), async (req, res) => {
   const { name, description, price, stock, category } = req.body;
-  const image_url = req.file ? `/uploads/${req.file.filename}` : null;
+  const image_url = req.file ? req.file.filename : null;
 
   try {
     const result = await pool.query(
@@ -59,11 +58,11 @@ router.post("/", upload.single('image'), async (req, res) => {
   }
 });
 
-// ✅ UPDATE product (with optional new image)
-router.put("/:id", upload.single('image'), async (req, res) => {
+// ✅ UPDATE product (optional image)
+router.put("/:id", upload.single("image"), async (req, res) => {
   const { id } = req.params;
-  const { name, description, price, stock, category } = req.body;
-  const image_url = req.file ? `/uploads/${req.file.filename}` : req.body.image_url;
+  const { name, description, price, stock, category, image_url: existingImageUrl } = req.body;
+  const image_url = req.file ? req.file.filename : existingImageUrl;
 
   try {
     const result = await pool.query(

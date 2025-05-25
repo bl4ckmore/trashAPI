@@ -11,7 +11,10 @@ const register = async (req, res) => {
 
   try {
     // 🔍 Check if user already exists
-    const userExists = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+    const userExists = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
     if (userExists.rows.length > 0) {
       return res.status(400).json({ message: "User already exists" });
     }
@@ -26,21 +29,25 @@ const register = async (req, res) => {
       [name, email, hashedPassword, role]
     );
 
-    res.status(201).json({ success: true, message: "User registered successfully" });
-
+    res
+      .status(201)
+      .json({ success: true, message: "User registered successfully" });
   } catch (err) {
     console.error("Registration error:", err);
     res.status(500).json({ message: "Server error during registration" });
   }
 };
 
-// ✅ Login Controller
+// ✅ Login Controller (updated with loginTime)
 const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
     // 🔍 Find user by email
-    const userResult = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+    const userResult = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
     const user = userResult.rows[0];
 
     if (!user) {
@@ -53,12 +60,12 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // 🔑 Generate JWT
+    // 🔑 Generate JWT (optional, still in use)
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    // 👇 Include role in response!
+    // ✅ Return user data including login time
     res.json({
       success: true,
       token,
@@ -67,9 +74,9 @@ const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        loginTime: Date.now(), // 🕒 Add login time here
       },
     });
-
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Server error during login" });
